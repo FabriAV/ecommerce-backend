@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@elysia/cors": "^1.4.2",
+    "@elysia/jwt": "^1.4.2",
     "@elysiajs/cors": "^1.4.2",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -23,9 +24,8 @@
     "pg": "^8.20.0"
   },
   "scripts": {
-  		"dev": "tsx watch src/index.ts",
-    	"build": "tsc src/index.ts --outDir dist",
-  		"start": "NODE_ENV=production node dist/index.js"
-   	}
-
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc src/index.ts --outDir dist",
+    "start": "NODE_ENV=production node dist/index.js"
+  }
 }
