@@ -1,5 +1,10 @@
-export function encryption(data: string): string{
-    const hasher = new Bun.CryptoHasher("sha256");
-    hasher.update(data);
-    return hasher.digest("hex")
+export async function encryption(password: string): Promise<string> {
+    const argonHash = await Bun.password.hash(password, {
+        algorithm: "argon2id",
+        memoryCost: 19456,
+        timeCost: 2
+    })
+
+    return argonHash
 }
+
