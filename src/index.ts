@@ -3,7 +3,7 @@ import { jwt } from '@elysia/jwt'
 import { cors } from '@elysia/cors'
 import { authRoutes } from './routes/auth';
 
-const app = new Elysia()
+const app = new Elysia({prefix : '/api' })
     .use(cors())
     .use(
         jwt({

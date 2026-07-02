@@ -28,10 +28,12 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         } catch (e) {
             if (e instanceof Prisma.PrismaClientKnownRequestError) {
                 if (e.code === 'P2002') {
-                    if ((e.meta?.target as string[]).includes('email')) {
+                    if (e.message.includes('email')) {
+                        status(409)
                         return { message: 'Email already registered' }
                     }
-                    if ((e.meta?.target as string[]).includes('phone')) {
+                    if (e.message.includes('phone')) {
+                        status(409)
                         return { message: 'Phone already registered' }
                     }
                 }
@@ -47,40 +49,35 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
             name: t.String()
         })
     })
-    .post('/sign-in', async ({ body, jwt, cookie: { auth }, status }) => {
-        try {
-            const user = await prisma.user.findUnique({
-                where: {
-                    email: body.email,
-                    password: await encryption(body.password)
-                }
-            })
-            if (!user) {
-                return { message: 'Email or password is incorrect' }
+    .post('/sign-in', async ({ body, jwt, cookie: { auth } }) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                email: body.email
             }
+        })
+        if (!user) {
+            return { message: 'Invalid email or password' }
+        }
+
+        const isMatch = await Bun.password.verify(body.password, user.password);
+        if (isMatch) {
             const token = await jwt.sign({
                 id: user.id,
                 email: user.email,
                 isAdmin: user.isAdmin
             })
             auth?.set({ value: token, httpOnly: true, maxAge: 7 * 86400 })
-            status(200)
-            return { message: 'User signed in successfully' }
-        } catch (e) {
-            if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                if (e.code === 'P2002') {
-                    status(401)
-                    return { message: 'Email or password is incorrect' }
-                }
-            }
-            throw e
+            return { message: 'Login successful' }
+        } else {
+            return { message: 'Invalid email or password' }
         }
     }, {
         body: t.Object({
             email: t.String(),
             password: t.String()
         })
-    })
+    }
+    )
     .post('/sign-out', async ({ cookie: { auth }, status }) => {
         auth?.remove()
         status(200)

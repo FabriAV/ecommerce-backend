@@ -26,8 +26,8 @@
     "pg": "^8.22.0"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc src/index.ts --outDir dist",
-    "start": "NODE_ENV=production node dist/index.js"
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
+    "start": "NODE_ENV=production bun src/index.ts"
   }
 }
