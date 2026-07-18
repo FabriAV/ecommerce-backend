@@ -3,6 +3,7 @@ import { Prisma } from '../../generated/prisma/client'
 import { Elysia, t } from 'elysia'
 import { encryption } from '../utils/encryption'
 import { pluginJWT } from '../plugin/jwt'
+import { pluginAuth } from '../plugin/auth'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
     .use(pluginJWT)
@@ -28,11 +29,15 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         } catch (e) {
             if (e instanceof Prisma.PrismaClientKnownRequestError) {
                 if (e.code === 'P2002') {
-                    if (e.message.includes('email')) {
+                    const target = Array.isArray(e.meta?.target)
+                        ? e.meta.target.map(String)
+                        : [String(e.meta?.target ?? '')]
+
+                    if (target.includes('email')) {
                         status(409)
                         return { message: 'Email already registered' }
                     }
-                    if (e.message.includes('phone')) {
+                    if (target.includes('phone')) {
                         status(409)
                         return { message: 'Phone already registered' }
                     }
@@ -49,13 +54,14 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
             name: t.String()
         })
     })
-    .post('/sign-in', async ({ body, jwt, cookie: { auth } }) => {
+    .post('/sign-in', async ({ body, jwt, cookie: { auth }, status }) => {
         const user = await prisma.user.findUnique({
             where: {
                 email: body.email
             }
         })
         if (!user) {
+            status(401)
             return { message: 'Invalid email or password' }
         }
 
@@ -69,6 +75,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
             auth?.set({ value: token, httpOnly: true, maxAge: 7 * 86400 })
             return { message: 'Login successful' }
         } else {
+            status(401)
             return { message: 'Invalid email or password' }
         }
     }, {
@@ -83,3 +90,5 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         status(200)
         return { message: 'User signed out successfully' }
     })
+    .use(pluginAuth)
+    .get('/me', ({ user }) => user)

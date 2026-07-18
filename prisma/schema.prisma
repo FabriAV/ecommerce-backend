@@ -26,7 +26,7 @@ model Product {
   categories  Category[]
   name        String
   description String
-  price       Float
+  price       Decimal     @db.Decimal(12, 2)
   stock       Int
   isActive    Boolean     @default(true)
   images      String[]
@@ -37,12 +37,13 @@ model Product {
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   products    Product[]
-  name        String    @unique
+  promotions  Promotion[]
+  name        String      @unique
   description String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Cart {
@@ -67,7 +68,7 @@ model Order {
   id         Int         @id @default(autoincrement())
   user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId     Int?
-  totalPrice Float
+  totalPrice Decimal     @db.Decimal(12, 2)
   status     OrderStatus @default(PROCESSING)
   orderItems OrderItem[]
   payment    Payment?
@@ -82,26 +83,35 @@ model OrderItem {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   productId Int
   quantity  Int      @default(1)
-  price     Float
+  price     Decimal  @db.Decimal(12, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Payment {
-  id             Int           @id @default(autoincrement())
-  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId        Int           @unique
-  mpPreferenceId String?
-  mpPaymentId    String?
-  status         PaymentStatus @default(PENDING)
-  amount         Float
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id        Int           @id @default(autoincrement())
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int           @unique
+  status    PaymentStatus @default(PENDING)
+  amount    Decimal       @db.Decimal(12, 2)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Promotion {
+  id         Int      @id @default(autoincrement())
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  minPrice   Decimal  @db.Decimal(12, 2)
+  discount   Decimal  @db.Decimal(12, 2)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum OrderStatus {
   PROCESSING
-  CANCELLED 
+  CANCELLED
   SHIPPED
   DELIVERED
 }
@@ -110,4 +120,4 @@ enum PaymentStatus {
   PENDING
   APPROVED
   REJECTED
-} 
+}
